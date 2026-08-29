@@ -3,8 +3,7 @@
 #include <chrono>
 #include <iomanip>
 
-#include "TokenBucket.h"
-#include "SlidingWindow.h"
+#include "RateLimiter.h"
 
 using namespace std;
 
@@ -12,18 +11,68 @@ int main()
 {
     cout << "Rate Limiter Server Starting..." << endl;
 
-    // Create a token bucket
-    // Capacity = 5 tokens
-    // Refill rate = 2 tokens per second
-    TokenBucket bucket(5, 2);
 
-    cout << "\nTesting Token Bucket...\n" << endl;
+    // ==========================================
+    // CREATE RATE LIMITER
+    // ==========================================
 
-    // Send 7 requests immediately
+    RateLimiter limiter;
+
+
+    // ==========================================
+    // CLIENT 1 - TOKEN BUCKET
+    // ==========================================
+
+    ClientConfig client1;
+
+    client1.clientId = "user123";
+    client1.algorithm = "token_bucket";
+
+    client1.capacity = 5;
+    client1.refillRate = 2;
+
+    client1.maxRequests = 0;
+    client1.windowSize = 0;
+
+    limiter.addClient(client1);
+
+
+    // ==========================================
+    // CLIENT 2 - SLIDING WINDOW
+    // ==========================================
+
+    ClientConfig client2;
+
+    client2.clientId = "user456";
+    client2.algorithm = "sliding_window";
+
+    client2.capacity = 0;
+    client2.refillRate = 0;
+
+    client2.maxRequests = 5;
+    client2.windowSize = 1;
+
+    limiter.addClient(client2);
+
+
+    // ==========================================
+    // TEST USER 123
+    // ==========================================
+
+    cout << "\n==============================" << endl;
+    cout << "       USER123 TEST" << endl;
+    cout << "==============================\n" << endl;
+
+    cout << "Algorithm: Token Bucket\n" << endl;
+
     for (int i = 1; i <= 7; i++)
     {
-        cout << "Availabel tokens" << fixed << setprecision(2) << bucket.getAvailableTokens() <<endl;
-        if (bucket.allowRequest())
+        cout << "Available tokens: "
+             << fixed << setprecision(2)
+             << limiter.getAvailableTokens("user123")
+             << endl;
+
+        if (limiter.allowRequest("user123"))
         {
             cout << "Request " << i << " -> ALLOW" << endl;
         }
@@ -31,87 +80,63 @@ int main()
         {
             cout << "Request " << i << " -> REJECT" << endl;
         }
-
-        
     }
 
-    // Wait for 1 second
-    cout << "\nWaiting for 1 second...\n" << endl;
 
-    this_thread::sleep_for(chrono::seconds(1));   
+    // ==========================================
+    // TEST USER 456
+    // ==========================================
 
-    // Try another request
-    for(int i=0; i<3; i++)
+    cout << "\n==============================" << endl;
+    cout << "       USER456 TEST" << endl;
+    cout << "==============================\n" << endl;
+
+    cout << "Algorithm: Sliding Window\n" << endl;
+
+    for (int i = 1; i <= 7; i++)
     {
-        cout << "Availabel tokens" << fixed << setprecision(2) << bucket.getAvailableTokens() <<endl;
-        if (bucket.allowRequest())
+        cout << "Requests in window: "
+             << limiter.getRequestCount("user456")
+             << endl;
+
+        if (limiter.allowRequest("user456"))
         {
-            cout << "Request " << (i + 8) << " -> ALLOW" << endl;
+            cout << "Request " << i << " -> ALLOW" << endl;
         }
         else
         {
-            cout << "Request " << (i + 8) << " -> REJECT" << endl;
+            cout << "Request " << i << " -> REJECT" << endl;
         }
-        
     }
+
 
     // ==========================================
-// SLIDING WINDOW TEST
-// ==========================================
+    // WAIT
+    // ==========================================
 
-cout << "\nTesting Sliding Window...\n" << endl;
+    cout << "\nWaiting for 1.1 seconds...\n" << endl;
 
-// Maximum 5 requests in 1 second
-    SlidingWindow window(5, 1);
+    this_thread::sleep_for(
+        chrono::milliseconds(1100)
+    );
 
-// Send 7 requests
-for (int i = 1; i <= 7; i++)
-{
-    cout << "Available requests: "
-         << window.getRequestCount()
+
+    // ==========================================
+    // TEST USER456 AFTER WINDOW
+    // ==========================================
+
+    cout << "\nRequests in window after waiting: "
+         << limiter.getRequestCount("user456")
          << endl;
 
-    cout << "Request " << i << " -> ";
-
-    if (window.allowRequest())
+    if (limiter.allowRequest("user456"))
     {
-        cout << "ALLOW" << endl;
+        cout << "New request -> ALLOW" << endl;
     }
     else
     {
-        cout << "REJECT" << endl;
+        cout << "New request -> REJECT" << endl;
     }
-}
-
-// Wait for 1.1 seconds
-cout << "\nWaiting for 1.1 seconds...\n" << endl;
-
-this_thread::sleep_for(chrono::milliseconds(1100));
-
-cout << "Requests after waiting: "
-     << window.getRequestCount()
-     << endl;
-
-// Send 3 more requests
-for (int i = 1; i <= 3; i++)
-{
-    int requestNumber = i + 7;
-
-    cout << "Available requests: "
-         << window.getRequestCount()
-         << endl;
-
-    cout << "Request " << requestNumber << " -> ";
-
-    if (window.allowRequest())
-    {
-        cout << "ALLOW" << endl;
-    }
-    else
-    {
-        cout << "REJECT" << endl;
-    }
-}
 
 
     return 0;
