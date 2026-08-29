@@ -43,3 +43,9 @@ bool TokenBucket::allowRequest()
 
     return false;
 }
+
+double TokenBucket::getAvailableTokens(){
+    lock_guard<mutex> lock(bucketmutex);
+    refill();
+    return tokens;
+}

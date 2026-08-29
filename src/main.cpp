@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <iomanip>
 
 #include "TokenBucket.h"
 
@@ -20,6 +21,7 @@ int main()
     // Send 7 requests immediately
     for (int i = 1; i <= 7; i++)
     {
+        cout << "Availabel tokens" << fixed << setprecision(2) << bucket.getAvailableTokens() <<endl;
         if (bucket.allowRequest())
         {
             cout << "Request " << i << " -> ALLOW" << endl;
@@ -28,6 +30,8 @@ int main()
         {
             cout << "Request " << i << " -> REJECT" << endl;
         }
+
+        
     }
 
     // Wait for 1 second
@@ -38,6 +42,7 @@ int main()
     // Try another request
     for(int i=0; i<3; i++)
     {
+        cout << "Availabel tokens" << fixed << setprecision(2) << bucket.getAvailableTokens() <<endl;
         if (bucket.allowRequest())
         {
             cout << "Request " << (i + 8) << " -> ALLOW" << endl;
@@ -46,6 +51,7 @@ int main()
         {
             cout << "Request " << (i + 8) << " -> REJECT" << endl;
         }
+        
     }
 
     return 0;

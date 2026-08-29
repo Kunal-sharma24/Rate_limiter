@@ -40,6 +40,8 @@ public:
     // Returns false if the request is rejected
     bool allowRequest();
 
+    double getAvailableTokens();   //to get the available token count
+
 private:
 
     // Adds tokens according to the time that has passed
