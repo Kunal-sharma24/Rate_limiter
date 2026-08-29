@@ -83,3 +83,14 @@ add_test(
     NAME ConcurrencyTest
     COMMAND ConcurrencyTest
 )
+
+# ==========================================
+# BENCHMARK
+# ==========================================
+
+add_executable(RateLimiterBenchmark
+
+    benchmarks/RateLimiterBenchmark.cpp
+
+    src/TokenBucket.cpp
+)
